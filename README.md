@@ -1,1 +1,174 @@
 # Tarea3
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+     <link href="style.css" rel="stylesheet" type="text/css"/>
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+            integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+ </head>
+
+  <body>
+
+ <div class='container'>
+    <div class="page-header">
+      <h1>VISUAL ANALYTICS
+        <small>201920 </small>
+        </h1>
+    </div>
+      <div class="col-md-9">
+        <h1 ALIGN=center><b>Colombianos detenidos en el exterior.</b></h1>
+        <p>Información estadística de los colombianos detenidos en el exterior que incluye datos demográficos y datos de ubicación de las prisiones a partir del 2018.</p>
+        <p>Información extraída del portal Datos Abierto de Colombia en el siguiente enlace:</p><a href="https://www.datos.gov.co/Estad-sticas-Nacionales/Colombianos-detenidos-en-el-exterior/e97j-vuf7">https://www.datos.gov.co/Estad-sticas-Nacionales/Colombianos-detenidos-en-el-exterior/e97j-vuf7</a>
+         <img src="presos.jpeg" alt="." width="650" height="200" >
+
+        <div id="tooltip" height="50"></div>
+        <br>
+        <br>
+        <div class="container">
+                <div class="buttons">
+          
+                  <input type="radio" id="TOTAL" name="property" value="TOTAL" onclick="bubbleChart('TOTAL')">
+                  <label for="TOTAL">Todos</label>
+          
+                  <input type="radio" id="FEMENINO" name="property" value="FEMENINO" onclick="bubbleChart('FEMENINO')">
+                  <label for="FEMENINO">Femenino</label>
+          
+                  <input type="radio" id="MASCULINO" name="property" value="MASCULINO" onclick="bubbleChart('MASCULINO')">
+                  <label for="MASCULINO">Masculino</label>
+                </div>
+                <div class="visual">
+                </div>
+              </div>
+        <svg width="600" height="80"></svg>
+      </div>
+      <div class="col-md-3">
+        <a href="https://github.com/wjrincon10/Tarea3" class="btn btn-primary">CODE</a>
+        <a href="#" class="btn btn-primary">SLIDES</a>
+        <a href="#" class="btn btn-primary">VIDEO</a>
+        <h3>Guia:</h3>
+        <p> - Esta visualización nos permite ver cuáles son los países más visitados por los colombianos, Cada circulo representa un País.</p>
+        <p> - También cuenta con una opción de selección, la cual nos permite clasificarlos por género (Femenino / Masculino) o totalizado.</p>
+        <p> - El tamaño del circulo depende la cantidad de personas. A continuación, una escala del color:</p>
+
+          <img src="tabulacion.jpeg" alt="..">
+      </div>
+  </div>
+ 
+    <script>
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      let svg = d3.select('.visual').append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      function bubbleChart(property) {
+          console.log("property" + property);
+
+          let pack = d3.pack()
+            .size([width, height])
+            .padding(8);
+
+          let units = ['', '', '', '', '']
+          let duration = 1000;
+          let delay = 10;
+
+          d3.csv('https://raw.githubusercontent.com/wjrincon10/Tarea3/master/colombianosDetenidos.csv', function(d) {
+
+              if (!isNaN(parseFloat(d[property])) && isFinite(d[property])){
+                d[property] = +d[property];
+
+              } else {
+                throw 'Property value isn\'t a number or doesn\'t exist';
+                 console.log("Property value isn\'t a number or doesn\'t exist" );
+              }
+              console.log(d);
+              return d;
+
+
+          }, function(error, objects) {
+
+              if (error) throw error;
+
+              let index = objects.columns.indexOf(property)
+
+              let root = d3.hierarchy({children: objects})
+                .sum(d => d[property])
+                .sort((a, b) => b.value - a.value);
+
+              let nodes = svg.selectAll('.node').data([]).exit().remove();
+
+              nodes = svg.selectAll('.node')
+                .data(pack(root).leaves())
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+
+              nodes.append('title')
+                .text(d => '\"' + d.data.PAIS + '\"\n'
+                      + property.replace(property[0], l => l.toUpperCase())
+                      + ': ' + d.value + units[index]);
+
+              nodes.append('circle')
+                .transition()
+                .duration(duration)
+                .delay((d, i) => i * delay)
+                .attr('r', d => d.r)
+                .attr("fill",function(d){
+                if (d.value <= 1000) {
+                  return "#a6cee3"  // Green
+                } else if (d.value > 1000 && d.value <= 2000) {
+                  return "#1f78b4"  // Yellow
+                } else if (d.value > 2000 && d.value <= 3000) {
+                  return "#b2df8a"  // Orange
+                } else if (d.value > 3000 && d.value <= 4000) {
+                  return "#33a02c"  // Orange
+                } else if (d.value > 4000 && d.value <= 5000) {
+                  return "#fb9a99"  // Orange
+                } else if (d.value > 5000 && d.value <= 6000) {
+                  return "#F84E4E"  // Orange
+                } else if (d.value > 6000 && d.value <= 7000) {
+                  return "#fdbf6f"  // Orange
+                } else if (d.value > 7000 && d.value <= 8000) {
+                  return "#FCA532"  // Orange
+                } else if (d.value > 8000 && d.value <= 13000) {
+                    return "#CAB2D2"  // Orange
+                } else if (d.value > 13000 ) {
+                  return "#6A3D9A"  // Orange
+                } else {
+                  return "#cab2d6"  // Red
+                }
+              });
+
+              nodes.append("text")
+                .transition()
+                .duration(duration)
+                .delay((d, i) => i * delay)
+                .attr('font-size', (d) => d.r / 5)
+                .text(d => d.data.PAIS.substring(0, d.r / 3))
+                .attr('fill', '#252525')
+                .attr('font-size', 12)
+                .attr('dx', -16)
+                .attr('dy', -5);;
+
+          });
+      }
+
+      bubbleChart('TOTAL');
+    </script>
+    <footer align="center" style="font-size: 12px;">
+            Wilman Javier Rincon Bautista<br>
+            Código: 201421877<br>
+            Correo: wj.rincon10@uniandes.edu.co<br>
+            Universidad de los Andes<br>
+            Maestría en Ingeniería de la Información
+  </footer>
+  </body>
+</html>
